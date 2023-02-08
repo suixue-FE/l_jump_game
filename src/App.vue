@@ -1,36 +1,53 @@
 <template>
-  <div class="mask">
-    <div v-show="state.in_the_game " class="info">
+  <div class="mask" ref="dom">
+    <div v-show="state.in_the_game" class="info">
       <div class="gaming-score">
         得分：<span class="current-score">{{ state.current_score }}</span></div>
     </div>
-    <div div class="content">
+    <div v-show="!state.in_the_game" class="content">
       <div class="score-container">
         <p class="title">本次得分</p>
-        <h1 class="score">0</h1>
+        <h1 class="score">{{ state.score  }}</h1>
       </div>
-      <button class="restart">restart</button>
+      <button @click.stop="restart" class="restart">restart</button>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+import { Game } from './game';
   
+const dom = ref<HTMLElement | null>(null);
 const state = reactive({ 
   in_the_game: false,
-  current_score: 0
+  current_score: 0,
+  score:0
 });
-
+let game
+onMounted(() => {
+  game=new Game();
+  game.init(dom.value);
+  game._addFailedFn(failed);
+  game._addSuccessFn(success);
+  // this.game = game;
+});
 function restart() {
   state.in_the_game = true;
-  // game._restart();
+  game?._restart();
+}
+function failed(score?:number) {
+  state.score = score || 0;
+  state.in_the_game = false;
+}
+function success(current_score?:number) {
+  state.current_score=current_score || 0;
 }
 </script>
 <style scoped>
  .mask{
     display: flex;
     justify-content: center;
-    align-items: center;
+    /* align-items: center; */
     position: fixed;
     width: 100vw;
     height: 100vh;
@@ -46,7 +63,6 @@ function restart() {
     border-radius: 20px;
     background: rgba(0,0,0,0.4);
     border: 5px solid rgba(255,255,255,0.05);
-
   }
   .score-container{
     color: #ffffff;
@@ -78,6 +94,7 @@ function restart() {
     color:#232323;
   }
   .info{
+    height: 20px;
     margin: 20px 0;
     position: absolute;
     text-align: center;
